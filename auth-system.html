@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auth System</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .tabs {
+    display: flex;
+    background: #f5f5f5;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: #888;
+    transition: all 0.3s;
+    border: none;
+    background: none;
+    font-size: 16px;
+  }
+
+  .tab.active {
+    background: #fff;
+    color: #667eea;
+    border-bottom: 3px solid #667eea;
+  }
+
+  .form-container {
+    padding: 30px;
+  }
+
+  .form {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .form.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .form h2 {
+    color: #333;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 24px;
+  }
+
+  .input-group {
+    margin-bottom: 18px;
+    position: relative;
+  }
+
+  .input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s;
+    outline: none;
+  }
+
+  .input-group input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    cursor: pointer;
+    color: #888;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    display: none;
+  }
+
+  .message.error {
+    background: #fee;
+    color: #c33;
+    border: 1px solid #fcc;
+    display: block;
+  }
+
+  .message.success {
+    background: #efe;
+    color: #2a7;
+    border: 1px solid #cfc;
+    display: block;
+  }
+
+  .dashboard {
+    padding: 40px 30px;
+    text-align: center;
+    display: none;
+    animation: fadeIn 0.4s;
+  }
+
+  .dashboard.active {
+    display: block;
+  }
+
+  .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 auto 20px;
+  }
+
+  .dashboard h2 {
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  .dashboard p {
+    color: #888;
+    margin-bottom: 25px;
+  }
+
+  .info-box {
+    background: #f7f8fc;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    text-align: left;
+  }
+
+  .info-box .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  .info-box .row:last-child {
+    border-bottom: none;
+  }
+
+  .info-box .label {
+    color: #888;
+    font-size: 14px;
+  }
+
+  .info-box .value {
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .btn-logout {
+    background: #ff4757;
+  }
+
+  .btn-logout:hover {
+    box-shadow: 0 8px 20px rgba(255,71,87,0.4);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Вкладки -->
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="switchTab('login')">Вход</button>
+    <button class="tab" onclick="switchTab('register')">Регистрация</button>
+  </div>
+
+  <!-- Форма входа -->
+  <div class="form-container" id="formContainer">
+    <div class="form active" id="loginForm">
+      <h2>Добро пожаловать!</h2>
+      <div class="input-group">
+        <label>Логин</label>
+        <input type="text" id="loginUsername" placeholder="Введите логин" autocomplete="username">
+      </div>
+      <div class="input-group">
+        <label>Пароль</label>
+        <input type="password" id="loginPassword" placeholder="Введите пароль" autocomplete="current-password">
+        <span class="toggle-password" onclick="togglePassword('loginPassword', this)">👁</span>
+      </div>
+      <button class="btn" onclick="handleLogin()">Войти</button>
+      <div class="message" id="loginMessage"></div>
+    </div>
+
+    <!-- Форма регистрации -->
+    <div class="form" id="registerForm">
+      <h2>Создать аккаунт</h2>
+      <div class="input-group">
+        <label>Логин</label>
+        <input type="text" id="regUsername" placeholder="Придумайте логин" autocomplete="username">
+      </div>
+      <div class="input-group">
+        <label>Пароль</label>
+        <input type="password" id="regPassword" placeholder="Придумайте пароль" autocomplete="new-password">
+        <span class="toggle-password" onclick="togglePassword('regPassword', this)">👁</span>
+      </div>
+      <div class="input-group">
+        <label>Повторите пароль</label>
+        <input type="password" id="regPasswordConfirm" placeholder="Повторите пароль" autocomplete="new-password">
+        <span class="toggle-password" onclick="togglePassword('regPasswordConfirm', this)">👁</span>
+      </div>
+      <button class="btn" onclick="handleRegister()">Зарегистрироваться</button>
+      <div class="message" id="registerMessage"></div>
+    </div>
+  </div>
+
+  <!-- Личный кабинет -->
+  <div class="dashboard" id="dashboard">
+    <div class="avatar" id="avatarLetter">U</div>
+    <h2>Личный кабинет</h2>
+    <p>Вы успешно вошли в систему</p>
+    <div class="info-box">
+      <div class="row">
+        <span class="label">Логин</span>
+        <span class="value" id="dashUsername">-</span>
+      </div>
+      <div class="row">
+        <span class="label">Дата регистрации</span>
+        <span class="value" id="dashDate">-</span>
+      </div>
+      <div class="row">
+        <span class="label">Всего пользователей</span>
+        <span class="value" id="dashCount">-</span>
+      </div>
+    </div>
+    <button class="btn btn-logout" onclick="handleLogout()">Выйти</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   МОДУЛЬ БАЗЫ ДАННЫХ (эмуляция на localStorage)
+   ============================================================ */
+
+const DB = {
+  // Ключ для хранения пользователей
+  USERS_KEY: 'auth_app_users',
+  // Ключ для хранения текущей сессии
+  SESSION_KEY: 'auth_app_session',
+
+  // Простая "хеш-функция" для пароля (НЕ для продакшена!)
+  hashPassword(password) {
+    let hash = 0;
+    const salt = 'my_secret_salt_2024';
+    const str = password + salt;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 32-bit
+    }
+    // Двойной проход для лучшего распределения
+    let hash2 = 0;
+    for (let i = str.length - 1; i >= 0; i--) {
+      const char = str.charCodeAt(i);
+      hash2 = ((hash2 << 5) - hash2) + char;
+      hash2 = hash2 & hash2;
+    }
+    return Math.abs(hash).toString(16) + Math.abs(hash2).toString(16);
+  },
+
+  // Получить всех пользователей
+  getUsers() {
+    try {
+      const raw = localStorage.getItem(this.USERS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.error('Ошибка чтения базы:', e);
+      return [];
+    }
+  },
+
+  // Сохранить массив пользователей
+  saveUsers(users) {
+    try {
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+      return true;
+    } catch (e) {
+      console.error('Ошибка записи в базу:', e);
+      return false;
+    }
+  },
+
+  // Найти пользователя по логину (регистронезависимо)
+  findUser(username) {
+    const users = this.getUsers();
+    return users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  },
+
+  // Проверить, существует ли пользователь
+  userExists(username) {
+    return !!this.findUser(username);
+  },
+
+  // Создать нового пользователя
+  createUser(username, password) {
+    if (this.userExists(username)) {
+      throw new Error('Пользователь с таким логином уже существует');
+    }
+    const users = this.getUsers();
+    const newUser = {
+      id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+      username: username,
+      passwordHash: this.hashPassword(password),
+      createdAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    this.saveUsers(users);
+    return newUser;
+  },
+
+  // Проверить логин и пароль
+  authenticate(username, password) {
+    const user = this.findUser(username);
+    if (!user) return null;
+    const hash = this.hashPassword(password);
+    if (hash !== user.passwordHash) return null;
+    return user;
+  },
+
+  // Сохранить сессию
+  saveSession(user) {
+    const session = {
+      userId: user.id,
+      username: user.username,
+      loginAt: new Date().toISOString()
+    };
+    localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+  },
+
+  // Получить текущую сессию
+  getSession() {
+    try {
+      const raw = localStorage.getItem(this.SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  // Удалить сессию
+  clearSession() {
+    localStorage.removeItem(this.SESSION_KEY);
+  },
+
+  // Количество пользователей
+  count() {
+    return this.getUsers().length;
+  }
+};
+
+/* ============================================================
+   ВАЛИДАЦИЯ
+   ============================================================ */
+
+const Validator = {
+  validateUsername(username) {
+    if (!username || username.trim().length === 0) {
+      return { valid: false, error: 'Введите логин' };
+    }
+    if (username.trim().length < 3) {
+      return { valid: false, error: 'Логин должен содержать минимум 3 символа' };
+    }
+    if (username.trim().length > 20) {
+      return { valid: false, error: 'Логин не должен превышать 20 символов' };
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) {
+      return { valid: false, error: 'Логин может содержать только буквы, цифры и _' };
+    }
+    return { valid: true };
+  },
+
+  validatePassword(password) {
+    if (!password || password.length === 0) {
+      return { valid: false, error: 'Введите пароль' };
+    }
+    if (password.length < 6) {
+      return { valid: false, error: 'Пароль должен содержать минимум 6 символов' };
+    }
+    if (password.length > 50) {
+      return { valid: false, error: 'Пароль слишком длинный' };
+    }
+    return { valid: true };
+  },
+
+  validateConfirm(password, confirm) {
+    if (password !== confirm) {
+      return { valid: false, error: 'Пароли не совпадают' };
+    }
+    return { valid: true };
+  }
+};
+
+/* ============================================================
+   UI КОНТРОЛЛЕР
+   ============================================================ */
+
+const UI = {
+  showMessage(elementId, text, type) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'message ' + type;
+    el.style.display = 'block';
+    // Автоскрытие через 4 секунды для успеха
+    if (type === 'success') {
+      setTimeout(() => {
+        el.style.display = 'none';
+      }, 4000);
+    }
+  },
+
+  hideMessage(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.style.display = 'none';
+  },
+
+  clearInputs(ids) {
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  },
+
+  formatDate(isoString) {
+    const d = new Date(isoString);
+    return d.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+};
+
+/* ============================================================
+   ЛОГИКА ПРИЛОЖЕНИЯ
+   ============================================================ */
+
+function switchTab(tab) {
+  const tabs = document.querySelectorAll('.tab');
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+
+  UI.hideMessage('loginMessage');
+  UI.hideMessage('registerMessage');
+
+  if (tab === 'login') {
+    tabs[0].classList.add('active');
+    tabs[1].classList.remove('active');
+    loginForm.classList.add('active');
+    registerForm.classList.remove('active');
+  } else {
+    tabs[1].classList.add('active');
+    tabs[0].classList.remove('active');
+    registerForm.classList.add('active');
+    loginForm.classList.remove('active');
+  }
+}
+
+function togglePassword(inputId, iconEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    iconEl.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    iconEl.textContent = '👁';
+  }
+}
+
+function handleRegister() {
+  UI.hideMessage('registerMessage');
+
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm = document.getElementById('regPasswordConfirm').value;
+
+  // Валидация
+  const vUser = Validator.validateUsername(username);
+  if (!vUser.valid) {
+    UI.showMessage('registerMessage', vUser.error, 'error');
+    return;
+  }
+
+  const vPass = Validator.validatePassword(password);
+  if (!vPass.valid) {
+    UI.showMessage('registerMessage', vPass.error, 'error');
+    return;
+  }
+
+  const vConfirm = Validator.validateConfirm(password, confirm);
+  if (!vConfirm.valid) {
+    UI.showMessage('registerMessage', vConfirm.error, 'error');
+    return;
+  }
+
+  try {
+    const user = DB.createUser(username, password);
+    UI.showMessage('registerMessage', 'Регистрация успешна! Теперь войдите.', 'success');
+    UI.clearInputs(['regUsername', 'regPassword', 'regPasswordConfirm']);
+
+    // Автопереключение на вкладку входа через 1.5 сек
+    setTimeout(() => {
+      switchTab('login');
+      document.getElementById('loginUsername').value = user.username;
+    }, 1200);
+  } catch (e) {
+    UI.showMessage('registerMessage', e.message, 'error');
+  }
+}
+
+function handleLogin() {
+  UI.hideMessage('loginMessage');
+
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!username || !password) {
+    UI.showMessage('loginMessage', 'Заполните все поля', 'error');
+    return;
+  }
+
+  const user = DB.authenticate(username, password);
+  if (!user) {
+    UI.showMessage('loginMessage', 'Неверный логин или пароль', 'error');
+    return;
+  }
+
+  DB.saveSession(user);
+  UI.showMessage('loginMessage', 'Успешный вход!', 'success');
+
+  setTimeout(() => {
+    showDashboard(user);
+  }, 600);
+}
+
+function handleLogout() {
+  DB.clearSession();
+  document.getElementById('dashboard').classList.remove('active');
+  document.getElementById('tabs').classList.remove('hidden');
+  document.getElementById('formContainer').classList.remove('hidden');
+  switchTab('login');
+  UI.clearInputs(['loginUsername', 'loginPassword']);
+}
+
+function showDashboard(user) {
+  // Скрываем формы
+  document.getElementById('tabs').classList.add('hidden');
+  document.getElementById('formContainer').classList.add('hidden');
+
+  // Показываем дашборд
+  document.getElementById('dashboard').classList.add('active');
+
+  // Заполняем данные
+  document.getElementById('dashUsername').textContent = user.username;
+  document.getElementById('dashDate').textContent = UI.formatDate(user.createdAt);
+  document.getElementById('dashCount').textContent = DB.count();
+  document.getElementById('avatarLetter').textContent = user.username.charAt(0).toUpperCase();
+}
+
+/* ============================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ============================================================ */
+
+function initApp() {
+  // Проверяем существующую сессию
+  const session = DB.getSession();
+  if (session) {
+    const user = DB.findUser(session.username);
+    if (user) {
+      showDashboard(user);
+      return;
+    } else {
+      // Сессия устарела - чистим
+      DB.clearSession();
+    }
+  }
+
+  // По умолчанию показываем форму входа
+  switchTab('login');
+
+  // Обработка Enter в полях
+  const enterMap = {
+    'loginUsername': handleLogin,
+    'loginPassword': handleLogin,
+    'regUsername': handleRegister,
+    'regPassword': handleRegister,
+    'regPasswordConfirm': handleRegister
+  };
+
+  Object.keys(enterMap).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          enterMap[id]();
+        }
+      });
+    }
+  });
+}
+
+// Запуск при загрузке
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
