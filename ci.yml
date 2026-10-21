@@ -1,0 +1,29 @@
+name: CI - Проверка кода
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Extract JS from HTML
+        run: node extract-js.js
+
+      - name: Syntax check extracted JS
+        run: node --check extracted.js
+
+      - name: Run audit tests
+        run: node test.js
