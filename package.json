@@ -1,0 +1,9 @@
+{
+  "name": "auth-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "extract": "node extract-js.js",
+    "test": "node extract-js.js && node test.js"
+  }
+}
